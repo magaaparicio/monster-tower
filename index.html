@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monster Tower</title>
+<meta name="description" content="Juego casual de equilibrio: apila monstruos de goma sin que la torre se derrumbe.">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="assets/ui/record.webp">
+</head>
+<body>
+<div id="stage">
+  <canvas id="game" aria-label="Escena de prueba de Monster Tower"></canvas>
+
+  <div class="hud">
+    <div class="chips">
+      <div class="score" aria-live="polite">
+        <div class="count"><b id="scoreN">0</b><span>piezas</span></div>
+        <div class="sub" id="scoreSub">0.0 m · Récord 0</div>
+      </div>
+    </div>
+    <div class="right">
+      <button class="img-btn" id="btnPause" aria-label="Pausa" title="Pausa (P)"><img data-ui="pausa" alt=""></button>
+      <div class="next">
+        <button class="img-btn swap-btn" id="btnSwap" aria-label="Cambiar la pieza por la siguiente" title="Cambiar (C)"><img data-ui="cambiar" alt=""><b id="swapN">3</b></button>
+        <div class="next-box"><span class="lbl">Sigue</span><canvas id="nextCanvas" width="96" height="96" aria-label="Siguiente pieza"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="ctrl" id="btnRotL" aria-label="Girar a la izquierda"><img class="ico" data-ui="girar-izq" alt="">Girar</button>
+    <button class="ctrl big" id="btnDrop" aria-label="Soltar"><img class="ico" data-ui="soltar" alt=""><span id="dropLabel">Soltar</span></button>
+    <button class="ctrl" id="btnRotR" aria-label="Girar a la derecha"><img class="ico" data-ui="girar-der" alt="">Girar</button>
+  </div>
+
+  <div class="gameover" id="gameover" hidden>
+    <div class="card" style="background:none;box-shadow:none;color:#fff">
+      <h2 style="color:#fff;font-size:56px">¡UPS!</h2>
+      <p class="lead">La torre se derrumbó</p>
+      <div class="stats">
+        <div><b id="goPieces">0</b><span>Piezas</span></div>
+        <div><b id="goHeight">0 m</b><span>Altura</span></div>
+        <div><b id="goBest">0</b><span>Récord</span></div>
+      </div>
+      <span class="record" id="goRecord" hidden><img data-ui="record" alt="">¡Nuevo récord!</span>
+      <button class="again" id="btnAgain">Intentar de nuevo</button>
+      <button class="btn-sub" id="btnGoHome">Ir al inicio</button>
+    </div>
+  </div>
+
+  <div class="screen sheet-bg" id="pause" hidden>
+    <div class="card">
+      <h2>Pausa</h2>
+      <div class="menu-col">
+        <button class="btn-main" id="pmResume">Continuar</button>
+        <button class="btn-sub" id="pmRestart"><img data-ui="reiniciar" alt="">Reiniciar</button>
+        <button class="btn-sub" id="pmHowto"><img data-ui="ayuda" alt="">Cómo jugar</button>
+        <button class="btn-sub" id="pmSound" data-sound-btn><img data-sound alt="">Sonido</button>
+        <button class="btn-sub" id="pmSettings"><img data-ui="ajustes" alt="">Ajustes de prueba</button>
+        <button class="btn-sub" id="pmHome">Ir al inicio</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen sheet-bg" id="howto" hidden>
+    <div class="card">
+      <img class="howto-img" data-ui="como-jugar" alt="Cómo jugar: 1, mueve la pieza; 2, gírala; 3, suéltala.">
+      <div class="howto-caps"><span>Mueve la pieza</span><span>Gírala</span><span>Suéltala</span></div>
+      <p>Arrastra para mover. Si no te gusta la pieza, usa Cambiar: tienes 3 por partida. Si un monstruo cae de la plataforma, se acaba.</p>
+      <button class="btn-main" id="btnHowtoOk">¡A jugar!</button>
+    </div>
+  </div>
+
+  <div class="screen" id="home">
+    <div class="home-art" id="homeArt"></div>
+    <canvas id="homeFx" aria-hidden="true"></canvas>
+    <img class="logo" data-ui="logo" alt="Monster Tower">
+    <div class="home-bottom">
+      <button class="btn-play" id="btnPlay">JUGAR</button>
+      <div class="home-best"><img data-ui="record" alt=""><span>Récord: <b id="homeBest">0</b> piezas</span></div>
+    </div>
+  </div>
+
+  <aside class="panel" id="panel" hidden aria-label="Ajustes de prueba">
+    <header>
+      <h2>Ajustes de prueba</h2>
+      <button class="icon-btn" id="btnClose" aria-label="Cerrar ajustes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </header>
+    <p class="note">Este panel solo existe para validar la etapa 1. No forma parte del juego.</p>
+
+    <section>
+      <h3>Siguiente pieza</h3>
+      <select id="selNext" class="text-btn" aria-label="Siguiente pieza">
+        <option value="random">Aleatoria</option>
+      </select>
+      <p class="note">Elige un monstruo para probarlo una y otra vez. "Aleatoria" reparte todos sin repetir hasta agotarlos.</p>
+    </section>
+
+    <section>
+      <h3>Colisionador</h3>
+      <div class="seg" id="segCollider">
+        <button id="colFit" data-v="fit" aria-pressed="true">Ajustado</button>
+        <button id="colInset" data-v="inset" aria-pressed="false">Reducido 93%</button>
+      </div>
+      <label class="check"><input type="checkbox" id="chkDebug"> Mostrar colisionador y centros</label>
+      <p class="note">Cian: colisionador. Cruz blanca: centro visual (giro del jugador). Punto rojo: centro de masa (giro físico). Cambiar el colisionador reinicia la prueba.</p>
+    </section>
+
+    <section>
+      <h3>Iluminación</h3>
+      <div class="seg" id="segLight">
+        <button id="lightWorld" data-v="world" aria-pressed="true">Programada</button>
+        <button id="lightNone" data-v="none" aria-pressed="false">Sin luz extra</button>
+      </div>
+      <p class="note">Programada: el código añade luz que siempre viene de arriba, aunque el monstruo esté de cabeza.</p>
+    </section>
+
+    <section>
+      <h3>Giro</h3>
+      <div class="row"><label for="rngStep">Toque breve</label><output id="outStep"></output><input type="range" id="rngStep" min="1" max="15" step="1"></div>
+      <div class="row"><label for="rngSpin">Velocidad al mantener</label><output id="outSpin"></output><input type="range" id="rngSpin" min="30" max="300" step="10"></div>
+    </section>
+
+    <section>
+      <h3>Física</h3>
+      <div class="row"><label for="rngGrav">Gravedad</label><output id="outGrav"></output><input type="range" id="rngGrav" min="8" max="40" step="1"></div>
+      <div class="row"><label for="rngBounce">Rebote</label><output id="outBounce"></output><input type="range" id="rngBounce" min="0" max="0.6" step="0.05"></div>
+      <div class="row"><label for="rngFric">Fricción</label><output id="outFric"></output><input type="range" id="rngFric" min="0" max="1" step="0.05"></div>
+      <div class="row"><label for="rngAbsorb">Absorción del impacto</label><output id="outAbsorb"></output><input type="range" id="rngAbsorb" min="0" max="1" step="0.05"></div>
+      <button class="text-btn" id="btnDefaults">Restaurar valores iniciales</button>
+    </section>
+
+    <section>
+      <h3>Prueba de carga</h3>
+      <label class="check"><input type="checkbox" id="chkAuto"> Apilar automáticamente</label>
+      <p class="note">Suelta piezas solas sobre la torre para medir rendimiento y estabilidad con muchos monstruos. Mientras está activo, las piezas que caen no terminan la partida. Funciona mejor eligiendo un solo monstruo arriba.</p>
+    </section>
+
+    <section>
+      <h3>Controles</h3>
+      <p class="note">Arrastra sobre la escena para mover. En teclado: ← → mover · Z / X girar · Espacio soltar · C cambiar · R reiniciar.</p>
+    </section>
+
+    <section>
+      <h3>Medición</h3>
+      <div class="metrics" id="metrics">Suelta el monstruo para medir.</div>
+    </section>
+  </aside>
+
+  <div class="overlay" id="overlay"><div class="menu-col"><p id="overlayText">Cargando…</p><button class="btn-main" id="btnRetry" hidden>Reintentar</button></div></div>
+</div>
+
+<script src="lib/planck.min.js"></script>
+<script src="js/data/assets.js"></script>
+<script src="js/data/monsters-data.js"></script>
+<script src="js/data/faces-data.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/config.js"></script>
+<script src="js/geometry.js"></script>
+<script src="js/monsters.js"></script>
+<script src="js/physics.js"></script>
+<script src="js/game.js"></script>
+<script src="js/input.js"></script>
+<script src="js/render.js"></script>
+<script src="js/expressions.js"></script>
+<script src="js/loop.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
